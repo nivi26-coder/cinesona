@@ -2,6 +2,7 @@
 
 import Form from "next/form";
 import type { ChangeEvent } from "react";
+import type { Kind } from "@/lib/kinds";
 import { SORT_KEYS, SORT_OPTIONS, type SortKey } from "@/lib/sorts";
 import { SearchBox } from "./SearchBox";
 
@@ -12,11 +13,13 @@ const selectClass =
 
 export function FilterBar({
   q,
+  kind,
   genre,
   sort,
   genres,
 }: {
   q?: string;
+  kind?: Kind;
   genre?: string;
   sort: SortKey;
   genres: string[];
@@ -24,8 +27,9 @@ export function FilterBar({
   return (
     // next/form turns this GET form into a client-side navigation to /?q=…,
     // and it still works as a plain form before JavaScript loads.
-    <Form action="/" key={`${q}|${genre}|${sort}`} className="flex flex-col gap-3 sm:flex-row" role="search">
-      <SearchBox defaultValue={q} />
+    <Form action="/" key={`${q}|${kind}|${genre}|${sort}`} className="flex flex-col gap-3 sm:flex-row" role="search">
+      {kind && <input type="hidden" name="kind" value={kind} />}
+      <SearchBox defaultValue={q} kind={kind} />
       <div className="flex gap-3">
         <label className="sr-only" htmlFor="genre">
           Genre

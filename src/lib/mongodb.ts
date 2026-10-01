@@ -12,7 +12,17 @@ export function isDbConfigured(): boolean {
   return Boolean(process.env.MONGODB_URI);
 }
 
+/** Cinesona's own database: the `titles` collection. */
 export async function getDb(): Promise<Db> {
+  return (await getClient()).db(process.env.MONGODB_DB ?? "cinesona");
+}
+
+/** The read-only Atlas sample dataset, still used for movie comments. */
+export async function getMflixDb(): Promise<Db> {
+  return (await getClient()).db(process.env.MFLIX_DB ?? "sample_mflix");
+}
+
+async function getClient(): Promise<MongoClient> {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error(
@@ -33,6 +43,5 @@ export async function getDb(): Promise<Db> {
       });
   }
 
-  const client = await globalForMongo._mongoClient;
-  return client.db(process.env.MONGODB_DB ?? "sample_mflix");
+  return globalForMongo._mongoClient;
 }

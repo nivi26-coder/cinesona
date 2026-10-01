@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "db:indexes": "node --env-file=.env.local scripts/setup-indexes.mjs"
+    "db:indexes": "node --env-file-if-exists=.env.local scripts/setup-indexes.mjs",
+    "import:mflix": "node --env-file-if-exists=.env.local scripts/import-mflix.mjs",
+    "import:tmdb": "node --env-file-if-exists=.env.local scripts/import-tmdb.mjs",
+    "import:igdb": "node --env-file-if-exists=.env.local scripts/import-igdb.mjs"
   },
   "dependencies": {
     "mongodb": "^7.7.0",

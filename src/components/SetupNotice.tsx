@@ -12,7 +12,8 @@ export function SetupNotice() {
           connection string into <code className="font-mono text-foreground">MONGODB_URI</code>.
         </li>
         <li>
-          Run <code className="font-mono text-foreground">npm run db:indexes</code> once, then restart{" "}
+          Run <code className="font-mono text-foreground">npm run db:indexes</code> and{" "}
+          <code className="font-mono text-foreground">npm run import:mflix</code> once, then restart{" "}
           <code className="font-mono text-foreground">npm run dev</code>.
         </li>
       </ol>

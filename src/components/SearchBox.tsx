@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import type { Suggestion } from "@/lib/movies";
+import { KIND_INFO, titleHref, type Kind } from "@/lib/kinds";
+import type { Suggestion } from "@/lib/titles";
 
 const MIN_CHARS = 2;
 
-export function SearchBox({ defaultValue = "" }: { defaultValue?: string }) {
+export function SearchBox({ defaultValue = "", kind }: { defaultValue?: string; kind?: Kind }) {
   const router = useRouter();
   const listId = useId();
   const [value, setValue] = useState(defaultValue);
@@ -23,7 +24,8 @@ export function SearchBox({ defaultValue = "" }: { defaultValue?: string }) {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        const params = new URLSearchParams({ q, ...(kind && { kind }) });
+        const res = await fetch(`/api/suggest?${params}`, { signal: controller.signal });
         if (!res.ok) return;
         const data: { suggestions: Suggestion[] } = await res.json();
         setSuggestions({ q, items: data.suggestions });
@@ -36,27 +38,27 @@ export function SearchBox({ defaultValue = "" }: { defaultValue?: string }) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [q]);
+  }, [q, kind]);
 
   const items = q.length >= MIN_CHARS && suggestions.q === q ? suggestions.items : [];
   const expanded = open && items.length > 0;
 
   const go = (s: Suggestion) => {
     setOpen(false);
-    router.push(`/movies/${s.id}`);
+    router.push(titleHref(s));
   };
 
   return (
     <div className="relative flex-1">
       <label htmlFor={`${listId}-input`} className="sr-only">
-        Search movies
+        Search titles
       </label>
       <input
         id={`${listId}-input`}
         name="q"
         type="search"
         autoComplete="off"
-        placeholder="Search by title, plot, cast or director…"
+        placeholder={kind ? `Search ${KIND_INFO[kind].plural.toLowerCase()}…` : "Search movies, series, anime and games…"}
         value={value}
         role="combobox"
         aria-expanded={expanded}
@@ -79,7 +81,7 @@ export function SearchBox({ defaultValue = "" }: { defaultValue?: string }) {
             setOpen(true);
             setActive((i) => (i <= 0 ? items.length - 1 : i - 1));
           } else if (e.key === "Enter" && expanded && active >= 0) {
-            // A highlighted suggestion opens that movie; otherwise Enter
+            // A highlighted suggestion opens that title; otherwise Enter
             // submits the form as a normal full-text search.
             e.preventDefault();
             go(items[active]);
@@ -111,7 +113,9 @@ export function SearchBox({ defaultValue = "" }: { defaultValue?: string }) {
               }`}
             >
               <span className="truncate">{s.title}</span>
-              {s.year && <span className="shrink-0 text-muted">{s.year}</span>}
+              <span className="shrink-0 text-muted">
+                {[!kind && KIND_INFO[s.kind].label, s.year].filter(Boolean).join(" · ")}
+              </span>
             </li>
           ))}
         </ul>

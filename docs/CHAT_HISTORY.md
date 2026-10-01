@@ -65,9 +65,25 @@ Use this to give context to another editor or AI assistant. See `PLAN.md` for th
 - Fixed autocomplete ranking: fuzzy matching ranked "The Goddess" above "The Godfather" for "godf", and "W." above Star Wars for "star w". Now the order is title starts with the query (ignoring a leading The/A/An), then a word starts with it, then typo matches, each sorted by IMDb votes.
 - typecheck, lint, build pass. Still not committed.
 
+## 7. Scope widened: movies + web series + anime + games (2026-10-01)
+
+- `sample_mflix` has no video, only metadata. "Embedded" in `embedded_movies` means plot vectors: OpenAI ada-002 (1536 dims), Voyage voyage-3-large and voyage-4-large (2048 dims, float32).
+- Only 147 anime films in the data and nothing after 2016, so new content comes from APIs: **TMDB** (series/web series, newer movies, where to watch), **AniList** (anime, no key), **IGDB** (games, Twitch key).
+- Design: one `titles` collection with a `kind` field, so one search index + one vector index cover everything (M0 allows 3). Atlas usage is 216 MB of 512 MB; `embedded_movies` is 143 MB and will be dropped after migration. New embeddings: 1024 dims int8 (~1 KB each) instead of 2048-dim float (8 KB).
+- Roadmap renumbered into Phases 1–7 in PLAN.md. Every content API is free for non-commercial use only; commercial licences are a Phase 7 task.
+
+## 8. Stored vs live: built (2026-10-01)
+
+- Decision: store a slim copy of each title in our own DB (needed for search, vibe search, lists, rate limits); fetch fast-changing details live, cached 1 day.
+- API terms checked: **AniList forbids bulk collection** (and is at 30 req/min), so anime comes from TMDB and AniList is only called live per anime page. TMDB caching max 6 months (import purges older). IGDB allows storing.
+- Built: `titles` collection in new DB `cinesona`; `import:mflix` (20,653 titles; 696 duplicate films in sample_mflix merged); `import:tmdb` and `import:igdb` (written, need keys); live modules in `src/lib/live/`; tabs All/Movies/Series/Anime/Games; `/movies|series|anime|games/[slug]` pages; old `/movies/<ObjectId>` → 308.
+- Search re-weighted: "nolan" used to return films whose synopsis/cast mention Nolan (and "Dolan" via fuzzy); now Nolan's films come first.
+- Not done: deleting `src/lib/movies.ts` and `src/components/MovieCard.tsx` (untracked files, so deletion was blocked; the user should remove them). `npm run build` fails until `movies.ts` is gone. TMDB/IGDB imports untested until keys are added.
+
 ---
 
 ## Open questions / decisions still to make
 - Auth provider: **Clerk** (fastest, hosted) vs **Better Auth** (open source, self-hosted in your DB).
-- Embeddings: match existing OpenAI ada-002 vectors vs re-embed with **Voyage AI**.
-- Create the GitHub repo `nivi26-coder/cinesona`, then make the first commit and push.
+- ~~Embeddings~~: decided, Voyage voyage-4 family at 1024 dims int8 for every kind of title.
+- First commit and push (the GitHub repo exists and is empty).
+- Name: "Cinesona" leans toward film. Keep it, or pick a broader name now that games are included?
